@@ -1,0 +1,41 @@
+name: Test
+
+on: [push]
+
+jobs: 
+  build: 
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    strategy: 
+      matrix:
+        node-version: [14.17.5]
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Node Modules
+        run: npm install
+
+      - name: Lint Test
+        run: npm run lint
+
+      - name: AoT Build
+        run: npm run build
+
+      - name: Slack Notify
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took # selectable (default: repo,message)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # optional
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # required
+        if: failure() # Pick up events even if the job fails or is canceled.
+
+
